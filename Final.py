@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from datetime import datetime
+from functools import partial
 import pymongo
 
 # Configuración de la GUI
@@ -98,10 +99,11 @@ def frame_find():
 
 
     res2 = Label(mi_Frame, text="Resultado").grid(row=3, column=0, padx=5, pady=5)
-    lblRes = Label(mi_Frame, textvariable=res).grid(row=3, column=1, sticky="nsew", padx=5, pady=5)
 
-    btnConsulta = Button(mi_Frame, text="Consultar", command=find(lblRes)).grid(row=2, column=0, columnspan=2, sticky="nsew", padx=3, pady=3)
+    find()
 
+    # btnConsulta = Button(mi_Frame, text="Consultar", command=lambda: find()).grid(row=2, column=0, columnspan=2, sticky="nsew", padx=3, pady=3)
+    lblRes = Entry(mi_Frame, textvariable=res.get()).grid(row=3, column=1, sticky="nsew", padx=5, pady=5)
 
 def frame_find_one():
     clear()
@@ -241,20 +243,32 @@ def save():
     print(data.inserted_id)
     messagebox.showinfo("Guardar", "Documento guardado con id:" + str(data.inserted_id))
 
-def find(lblRes):
-    print(lblRes)
+def find():
     #Nos conectamos al servidor
     client = pymongo.MongoClient(conexion.get())
     #Que DB voy a utilizar
     db = client[database.get()]
     #Que colección voy a utilizar
     colection = db[coleccion.get()]
-    #Voy a guardar los datos
+    #Voy a guardar los datos en un cursor
     data = colection.find()
+    # Pasar los datos a una lista como string
+    result = []
     for dat in data:
-        lblRes.config(text=dat)
-        print(dat)
-    messagebox.showinfo("Consultar", "Documento encontrado:" )
+        result.append(
+            "{\n"+
+            "id: " + str(dat["_id"]) + "\n" +
+            "place: " + dat["place"] + "\n" +
+            "datetime: " + dat["datetime"] + "\n" +
+            "value: " + str(dat["value"]) + "\n" + 
+            "}\n"
+        )
+    
+    resultString = "\n".join(result)
+    res.set(resultString)
+    #Pasar en el messageInfo el resString para crear la ventana emergente
+    #Usar el boton para presentar el resultado en ventanas emergentes.
+    # # messagebox.showinfo("Consultar", "Documento encontrado:" )
 
 def find_one():
     doc = {query.get(), proy.get()}
